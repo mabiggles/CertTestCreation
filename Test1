@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Remove old certs from test folder
+rm -rf rootCA.pem
+rm -rf rootCA.key
+
+# Testing different names on certificate
+#/usr/bin/openssl req -new -days 1825 -nodes -x509 -subj '/C=RO/ST=Bucharest/L=Bucharest/O=Endpoint/CN=Enterprise2 CA SSL' -keyout rootCA.key -out rootCA.pem
+/usr/bin/openssl req -new -days 1825 -nodes -x509 -subj '/C=US/ST=Texas/L=Dallas/O=Endpoint/CN=Testing CA SSL' -keyout rootCA.key -out rootCA.pem
+openssl pkcs12 -inkey rootCA.key -in rootCA.pem -export -out certificate.pfx
+
+DIRECTORY="/Library/DeployCert"
+
+if [ ! -d "$DIRECTORY" ]; then
+    echo "Directory does not exist. Creating..."
+    sudo mkdir -p "$DIRECTORY"
+else
+    echo "Directory already exists."
+fi
+
+# Check current permissions
+echo "Current permissions:"
+ls -ld "$DIRECTORY"
+
+# Extract the certificate from the PFX
+#openssl pkcs12 -in certificate.pfx -clcerts -nokeys -out extracted_cert.pem -passin pass:{UNINSTALL PASSWORD HASH HERE IF WANTED}
+
+# Add the extracted certificate to the System keychain and trust it
+#sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain extracted_cert.pem
+
+# Move all generated certs to the target directory
+echo "Moving generated certs to $DIRECTORY"
+sudo cp certificate.pfx "$DIRECTORY"
+
+# Remove execute permission, add write permission
+chmod -x "$DIRECTORY"
+chmod +w "$DIRECTORY"
+
+echo "Updated permissions:"
+ls -ld "$DIRECTORY"
+
+echo "Done."
